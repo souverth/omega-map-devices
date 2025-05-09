@@ -1,19 +1,17 @@
-import L, { Map as LeafletMap } from "leaflet";
+import L from "leaflet";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet/dist/leaflet.css";
-import { useEffect, useRef } from "react";
-import type { TMapProps } from "../data";
+import { useEffect } from "react";
+import type { ExtendedMap } from "../data";
 
-// Mở rộng type cho Map
-export type ExtendedMap = LeafletMap & {
-  getAllMarkers: () => L.Marker[];
-};
 
 // 👇 Fix default icon không hiển thị
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
+import { useShallow } from "zustand/shallow";
 import iconUrl from "../../../assets/placeholder.png";
+import usePageState from "../useStatePage";
 import PopupViewer from "./PopupView";
 
 const defaultIcon = L.icon({
@@ -26,13 +24,11 @@ const defaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = defaultIcon;
 
-interface MapViewProps {
-  devices: TMapProps[];
-  onMapReady?: (map: ExtendedMap) => void;
-}
 
-const MapView = ({ devices, onMapReady }: MapViewProps) => {
-  const mapRef = useRef<ExtendedMap | null>(null);
+
+const MapView = () => {
+  const [mapRef, devices] = usePageState(useShallow((s) => [s.mapRef, s.data]))
+
 
   useEffect(() => {
     if (mapRef.current || devices.length === 0) return; // Map đã được khởi tạo
@@ -63,21 +59,21 @@ const MapView = ({ devices, onMapReady }: MapViewProps) => {
     };
 
     // Mở popup cho điểm đầu tiên
-    if (markerCluster.getLayers().length > 0) {
-      const firstMarker = markerCluster.getLayers()[0] as L.Marker;
-      const latlng = firstMarker.getLatLng();
-      map.setView(latlng, 17, { animate: true });
-      firstMarker.openPopup();
-    }
+    // if (markerCluster.getLayers().length > 0) {
+    //   const firstMarker = markerCluster.getLayers()[0] as L.Marker;
+    //   const latlng = firstMarker.getLatLng();
+    //   map.setView(latlng, 17, { animate: true });
+    //   firstMarker.openPopup();
+    // }
 
     // Gọi callback onMapReady với map instance
-    onMapReady?.(map);
+
 
     return () => {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [devices, onMapReady]);
+  }, [devices]);
 
   return (
     <div id="map" style={{ minHeight: "calc(100vh - 79px)", width: "100%" }} />

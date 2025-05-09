@@ -1,34 +1,37 @@
 import { Input, Select, type SelectProps } from "antd";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useShallow } from "zustand/shallow";
 import type { TMapProps } from "../data";
+import usePageState from "../useStatePage";
 import styles from "./DeviceList.module.css";
 
-const DeviceList = ({ devices, onDeviceClick, selectedDeviceId }: DeviceListProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedState, setSelectedState] = useState<string>("All");
+const DeviceList = ({ onDeviceClick, selectedDeviceId }: DeviceListProps) => {
+  const [devices, filter, setFilter] = usePageState(useShallow((s) => [s.data, s.filter, s.setFilter]))
+
+  const { Keyword, State } = filter
 
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  }, []);
+    setFilter({ ...filter, Keyword: e.target.value })
+  }, [filter, setFilter]);
 
   const handleStateChange = useCallback((value: string) => {
-    setSelectedState(value);
-  }, []);
+     setFilter({ ...filter, State: value })
+  }, [filter, setFilter]);
 
   const filteredDevices = useMemo(() => {
     return devices.filter((device) => {
       const matchesSearch =
-        device.SitesName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.DeviceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.Template.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.Group.toLowerCase().includes(searchTerm.toLowerCase());
+        device.SitesName.toLowerCase().includes(Keyword.toLowerCase()) ||
+        device.DeviceId.toLowerCase().includes(Keyword.toLowerCase()) ||
+        device.Template.toLowerCase().includes(Keyword.toLowerCase()) ||
+        device.Group.toLowerCase().includes(Keyword.toLowerCase());
 
       const matchesState =
-        selectedState === "All" ? true : device.State === selectedState;
+        State === "All" ? true : device.State === State;
 
       return matchesSearch && matchesState;
     });
-  }, [devices, searchTerm, selectedState]);
+  }, [devices, Keyword, State]);
 
   return (
     <div className={styles.container}>
@@ -38,7 +41,7 @@ const DeviceList = ({ devices, onDeviceClick, selectedDeviceId }: DeviceListProp
         <Input
           type="text"
           placeholder="Tìm kiếm thiết bị..."
-          value={searchTerm}
+          value={Keyword}
           onChange={handleSearch}
           className={styles.searchInput}
         />
@@ -95,7 +98,6 @@ const DEVICE_STATES: SelectProps["options"] = [
 ];
 
 interface DeviceListProps {
-  devices: TMapProps[];
   onDeviceClick: (device: TMapProps) => void;
   selectedDeviceId?: string | null;
 }
