@@ -31,39 +31,45 @@ const MapView = () => {
 
   const mapRef = useRef<ExtendedMap | null>(null);
 
-  const handleMapping = () => {
+  const initMap = () => {
+    let map = mapRef.current;
+    if (map) return;
+
+    if (devices.length === 0 || selectedDevice == null) return;
+
+    const [x, y] = selectedDevice.Point;
+    const targetLatLng = L.latLng(x, y);
+
+    // Nếu chưa có map: khởi tạo và thêm tile + markers
+    map = L.map("map").setView(targetLatLng, 13);
+    mapRef.current = map;
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "IOTSOFTVN",
+    }).addTo(map);
+
+    // Tạo và lưu cluster
+    const clusterGroup = L.markerClusterGroup({ chunkedLoading: true });
+
+    devices.forEach((device) => {
+      const [dx, dy] = device.Point;
+      const marker = L.marker([dx, dy]).bindPopup(PopupViewer(device));
+      clusterGroup.addLayer(marker);
+    });
+
+    map.addLayer(clusterGroup);
+
+    // Gắn vào mapRef nếu cần dùng lại
+    map.getAllMarkers = () => clusterGroup.getLayers() as L.Marker[];
+  };
+
+  const updateSelectedMarker = () => {
     if (devices.length === 0 || !selectedDevice) return;
 
     const [x, y] = selectedDevice.Point;
     const targetLatLng = L.latLng(x, y);
 
-    let map = mapRef.current;
-
-    // Nếu chưa có map: khởi tạo và thêm tile + markers
-    if (!map) {
-      map = L.map("map").setView(targetLatLng, 13);
-      mapRef.current = map;
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "IOTSOFTVN",
-      }).addTo(map);
-
-      // Tạo và lưu cluster
-      const clusterGroup = L.markerClusterGroup({ chunkedLoading: true });
-
-      devices.forEach((device) => {
-        const [dx, dy] = device.Point;
-        const marker = L.marker([dx, dy]).bindPopup(
-          PopupViewer(device)
-        );
-        clusterGroup.addLayer(marker);
-      });
-
-      map.addLayer(clusterGroup);
-
-      // Gắn vào mapRef nếu cần dùng lại
-      map.getAllMarkers = () => clusterGroup.getLayers() as L.Marker[];
-    }
+    const map = mapRef.current;
 
     // teleport tới tọa độ
     map.flyTo(targetLatLng, 13, { animate: true });
@@ -84,7 +90,8 @@ const MapView = () => {
   };
 
   useEffect(() => {
-    handleMapping();
+    initMap();
+    updateSelectedMarker();
     return () => {
       mapRef.current?.remove();
       mapRef.current = null;

@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Empty, Input, Select, Skeleton } from "antd";
-import { useCallback, useEffect } from "react";
+import debounce from "lodash/debounce";
+import { useCallback, useEffect, useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import { formatNumber, getNameStatus } from "../../../utils/AppUtils";
 import type { TMapProps } from "../data";
@@ -36,9 +37,18 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
 
   const handleSearch = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFilter({ ...filter, Keyword: e.target.value });
+      const keyword = e.target.value;
+      debouncedSearch(keyword);
     },
     [filter, setFilter]
+  );
+
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((keyword: string) => {
+        setFilter({ ...filter, Keyword: keyword });
+      }, 300), // delay 300ms
+    [setFilter]
   );
 
   const handleStateChange = useCallback(
@@ -62,8 +72,13 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
     });
 
     setFilteredDevices(newFiltered);
-    setSelectedDevice(newFiltered[0]);
-  }, [filter]);
+
+    if (
+      !selectedDevice ||
+      !newFiltered.find((d) => d.DeviceId === selectedDevice.DeviceId)
+    )
+      setSelectedDevice(newFiltered[0]);
+  }, [State, Keyword]);
 
   return (
     <div className={styles.container}>
@@ -81,7 +96,7 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
         />
 
         <Select
-          defaultValue={0}
+          defaultValue={State}
           options={stateOptions}
           onChange={handleStateChange}
           className="min-w-100px"

@@ -30,7 +30,7 @@
   border: 1px solid #eee;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .item:hover {
@@ -97,7 +97,7 @@
   border: 2px solid #1677ff;
   background-color: #f0faff;
   border-left: 6px solid #1677ff;
-  transition: all 0.1s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .list::-webkit-scrollbar {
