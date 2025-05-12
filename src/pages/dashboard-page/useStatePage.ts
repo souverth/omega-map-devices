@@ -3,16 +3,16 @@ import { create } from "zustand";
 import type { ExtendedMap, IFilter, TMapProps } from "./data";
 
 const initState: IState = {
+  filter: {
+    Keyword: "",
+    State: 0,
+  },
   isLoading: true,
   data: [],
   dataFiltered: [],
+  stateOptions: [],
   selectedInfo: null,
   mapRef: null,
-  stateOptions: [],
-  filter: {
-    Keyword: "",
-    State: "All",
-  },
 };
 
 const usePageState = create<IState & IAction>((set, get) => {

@@ -1,4 +1,5 @@
 import getStateColor from "../../../utils/AppUtils";
+import { getNameStatus } from "../../../utils/getNameStatusUtil";
 import type { TMapProps } from "../data";
 
 const PopupViewer = (device: TMapProps) => {
@@ -11,7 +12,7 @@ const PopupViewer = (device: TMapProps) => {
         <strong>Device:</strong> ${DeviceId}<br/>
         <strong>Template:</strong> ${Template}<br/>
         <strong>Group:</strong> ${Group}<br/>
-        <strong>State:</strong> <span style="color: ${getStateColor(State)}">${State}</span><br/>
+        <strong>State:</strong> <span style="color: ${getStateColor(getNameStatus(State))}">${getNameStatus(State)}</span><br/>
         <strong>Last:</strong> ${LastCommunication}
       </p>
     </div>

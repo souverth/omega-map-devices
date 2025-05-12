@@ -1,16 +1,14 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import L from "leaflet";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-import "leaflet/dist/leaflet.css";
-import { useEffect } from "react";
-import type { ExtendedMap } from "../data";
-
-
-// 👇 Fix default icon không hiển thị
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
+import "leaflet/dist/leaflet.css";
+import { useEffect, useRef } from "react";
 import { useShallow } from "zustand/shallow";
 import iconUrl from "../../../assets/placeholder.png";
+import type { ExtendedMap } from "../data";
 import usePageState from "../useStatePage";
 import PopupViewer from "./PopupView";
 
@@ -24,18 +22,23 @@ const defaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = defaultIcon;
 
+const MapView = ({ onMapReady }: MapViewProps) => {
+  const [devices, selectedDevice, filteredDevices] = usePageState(
+    useShallow((s) => [s.dataFiltered, s.selectedInfo, s.dataFiltered])
+  );
 
-
-const MapView = () => {
-  const [mapRef, devices] = usePageState(useShallow((s) => [s.mapRef, s.data]))
-
+  const mapRef = useRef<ExtendedMap | null>(null);
 
   useEffect(() => {
     if (mapRef.current || devices.length === 0) return; // Map đã được khởi tạo
+    console.log(filteredDevices[0], selectedDevice);
 
-    const [x, y] = devices[0].Point;
-    const map = L.map("map").setView([x, y], 13) as ExtendedMap;
+    const [x, y] =
+      selectedDevice == null ? filteredDevices[0].Point : selectedDevice.Point;
+    const map = L.map("map").setView([x, y], 17) as ExtendedMap;
     mapRef.current = map;
+
+    mapRef.current.flyTo([x, y], 17, { animate: true });
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "IOTSOFTVN",
@@ -59,21 +62,37 @@ const MapView = () => {
     };
 
     // Mở popup cho điểm đầu tiên
-    // if (markerCluster.getLayers().length > 0) {
-    //   const firstMarker = markerCluster.getLayers()[0] as L.Marker;
-    //   const latlng = firstMarker.getLatLng();
-    //   map.setView(latlng, 17, { animate: true });
-    //   firstMarker.openPopup();
-    // }
+
+    markerCluster.once("animationend", () => {
+      // mở popup tại đây
+    });
+
+    setTimeout(() => {
+      const target = selectedDevice ?? filteredDevices[0];
+      if (!target) return;
+
+      const [tx, ty] = target.Point;
+      const markers = markerCluster.getLayers() as L.Marker[];
+
+      const targetMarker = markers.find(
+        (marker) =>
+          marker.getLatLng().lat === tx && marker.getLatLng().lng === ty
+      );
+
+      if (targetMarker) {
+        map.setView([tx, ty], 17, { animate: true });
+        targetMarker.openPopup();
+      }
+    }, 300); // Delay nhẹ để đảm bảo marker đã render xong
 
     // Gọi callback onMapReady với map instance
-
+    onMapReady?.(map);
 
     return () => {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [devices]);
+  }, [onMapReady]);
 
   return (
     <div id="map" style={{ minHeight: "calc(100vh - 79px)", width: "100%" }} />
@@ -81,3 +100,7 @@ const MapView = () => {
 };
 
 export default MapView;
+
+interface MapViewProps {
+  onMapReady?: (map: ExtendedMap) => void;
+}

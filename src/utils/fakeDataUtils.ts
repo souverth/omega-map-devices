@@ -27,7 +27,7 @@ const generateFakeData = (count = 100): TMapProps[] => {
       SitesName: `${rand(["omega", "betelcom"])}-${i + 1}`,
       DeviceId:
         randomStr(3, "ABCDEFGHIJKLMNOPQRSTUVWXYZ") + randomNumStr(1_000_000, 6),
-      State: rand(["Online", "Offline", "Warning"]),
+      State: rand([1, 2, 3]),
       Template: code,
       Group: code,
       LastCommunication: randomDate(),
