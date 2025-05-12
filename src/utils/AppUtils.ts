@@ -64,3 +64,7 @@ export function getStateColor(state: string) {
       return "gray";
   }
 }
+
+export function formatNumber(num: number): string {
+  return num.toLocaleString("en-US");
+}

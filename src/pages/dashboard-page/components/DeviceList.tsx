@@ -2,7 +2,7 @@
 import { Empty, Input, Select, Skeleton } from "antd";
 import { useCallback, useEffect } from "react";
 import { useShallow } from "zustand/shallow";
-import { getNameStatus } from "../../../utils/AppUtils";
+import { formatNumber, getNameStatus } from "../../../utils/AppUtils";
 import type { TMapProps } from "../data";
 import usePageState from "../useStatePage";
 import styles from "./DeviceList.module.css";
@@ -67,7 +67,9 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.title}>Devices ({filteredDevices.length})</h3>
+      <h3 className={styles.title}>
+        Devices ({formatNumber(filteredDevices.length)})
+      </h3>
 
       <div className={styles.filters}>
         <Input

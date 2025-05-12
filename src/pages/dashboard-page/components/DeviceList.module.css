@@ -4,6 +4,9 @@
   padding: 16px;
   background: #fff;
   border-right: 1px solid #eee;
+
+  display: flex;
+  flex-direction: column;
 }
 
 .title {
@@ -13,10 +16,13 @@
 }
 
 .list {
+  flex: 1; /* 👈 Đây là key chính */
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  scrollbar-width: thin;
+   scrollbar-width: thin;
+  padding-right: 8px;
 }
 
 .item {
@@ -29,7 +35,7 @@
 
 .item:hover {
   border-color: #1677ff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .header {
@@ -81,7 +87,7 @@
   margin-bottom: 16px;
 }
 
-.deviceIdTitle{
+.deviceIdTitle {
   font-size: 11px;
   font-weight: 200;
   margin-bottom: 8px;
@@ -89,6 +95,16 @@
 
 .activeItem {
   border: 2px solid #1677ff;
-  background-color: #e6f7ff;
-  transition: all 0.2s;
+  background-color: #f0faff;
+  border-left: 6px solid #1677ff;
+  transition: all 0.1s;
+}
+
+.list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 4px;
 }

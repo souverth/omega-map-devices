@@ -53,7 +53,7 @@ const MapView = () => {
 
       devices.forEach((device) => {
         const [dx, dy] = device.Point;
-        const marker = L.marker([dx, dy], { draggable: true }).bindPopup(
+        const marker = L.marker([dx, dy]).bindPopup(
           PopupViewer(device)
         );
         clusterGroup.addLayer(marker);
@@ -65,7 +65,7 @@ const MapView = () => {
       map.getAllMarkers = () => clusterGroup.getLayers() as L.Marker[];
     }
 
-    // Từ đây map đã sẵn sàng
+    // teleport tới tọa độ
     map.flyTo(targetLatLng, 13, { animate: true });
 
     // Mở popup sau khi bay xong

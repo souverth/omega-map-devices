@@ -29,12 +29,12 @@ const DashboardPage: React.FC = () => {
   );
 
   useEffect(() => {
-    const initialPage =  () => {
+    const initialPage = async () => {
       setIsLoading(true);
 
       setOptionState(DEVICE_STATES)
 
-      const dataGenerate = generateFakeData(100);
+      const dataGenerate = await generateFakeData(5_000);
 
       setDevices(dataGenerate);
       setFilteredDevices(dataGenerate);
@@ -65,7 +65,7 @@ const DashboardPage: React.FC = () => {
 export default DashboardPage;
 
 const DEVICE_STATES: SelectProps["options"] = [
-  { label: "Tất cả", value: 0 },
+  { label: "All", value: 0 },
   { label: "Online", value: 1 },
   { label: "Offline", value: 2 },
   { label: "Warning", value: 3 },
