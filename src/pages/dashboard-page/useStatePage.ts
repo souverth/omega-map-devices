@@ -1,6 +1,6 @@
 import type { SelectProps } from "antd/es/select";
 import { create } from "zustand";
-import type { ExtendedMap, IFilter, TMapProps } from "./data";
+import type { IFilter, TMapProps } from "./data";
 
 const initState: IState = {
   filter: {
@@ -12,7 +12,6 @@ const initState: IState = {
   dataFiltered: [],
   stateOptions: [],
   selectedInfo: null,
-  mapRef: null,
 };
 
 const usePageState = create<IState & IAction>((set, get) => {
@@ -22,7 +21,6 @@ const usePageState = create<IState & IAction>((set, get) => {
     setData: data => set({ data: data }),
     setDataFiltered: dataFiltered => set({ dataFiltered: dataFiltered }),
     setSelectedInfo: selectedInfo => set({ selectedInfo: selectedInfo }),
-    setMapRef: mapRef => set({ mapRef: mapRef }),
     setStateOptions: stateOptions => set({ stateOptions: stateOptions }),
     setFilter: filter => set({ filter: filter }),
     refresh: () => {
@@ -40,7 +38,6 @@ interface IAction {
   setData: (data: TMapProps[]) => void;
   setDataFiltered: (dataFiltered: TMapProps[]) => void;
   setSelectedInfo: (selectedInfo: TMapProps) => void
-  setMapRef: (mapRef: ExtendedMap | null) => void;
   setStateOptions: (stateOptions: SelectProps["options"]) => void;
   setFilter: (filter: IFilter) => void;
   refresh: () => void;
@@ -52,7 +49,6 @@ interface IState {
   data: TMapProps[]
   dataFiltered: TMapProps[]
   selectedInfo: TMapProps | null
-  mapRef: ExtendedMap | null
   stateOptions: SelectProps["options"]
   filter: IFilter
 }

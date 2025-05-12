@@ -1,8 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Input, Select, type SelectProps } from "antd";
+import { Empty, Input, Select, Skeleton } from "antd";
 import { useCallback, useEffect } from "react";
 import { useShallow } from "zustand/shallow";
-import { getNameStatus } from "../../../utils/getNameStatusUtil";
+import { getNameStatus } from "../../../utils/AppUtils";
 import type { TMapProps } from "../data";
 import usePageState from "../useStatePage";
 import styles from "./DeviceList.module.css";
@@ -15,6 +15,9 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
     filteredDevices,
     setFilteredDevices,
     selectedDevice,
+    isLoading,
+    setSelectedDevice,
+    stateOptions,
   ] = usePageState(
     useShallow((s) => [
       s.data,
@@ -23,6 +26,9 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
       s.dataFiltered,
       s.setDataFiltered,
       s.selectedInfo,
+      s.isLoading,
+      s.setSelectedInfo,
+      s.stateOptions,
     ])
   );
 
@@ -43,20 +49,21 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
   );
 
   useEffect(() => {
-    setFilteredDevices(
-      devices.filter((device) => {
-        const matchesSearch =
-          device.SitesName.toLowerCase().includes(Keyword.toLowerCase()) ||
-          device.DeviceId.toLowerCase().includes(Keyword.toLowerCase()) ||
-          device.Template.toLowerCase().includes(Keyword.toLowerCase()) ||
-          device.Group.toLowerCase().includes(Keyword.toLowerCase());
+    const newFiltered = devices.filter((device) => {
+      const matchesSearch =
+        device.SitesName.toLowerCase().includes(Keyword.toLowerCase()) ||
+        device.DeviceId.toLowerCase().includes(Keyword.toLowerCase()) ||
+        device.Template.toLowerCase().includes(Keyword.toLowerCase()) ||
+        device.Group.toLowerCase().includes(Keyword.toLowerCase());
 
-        const matchesState = State == 0 ? true : device.State === State;
+      const matchesState = State == 0 ? true : device.State === State;
 
-        return matchesSearch && matchesState;
-      })
-    );
-  }, [devices, Keyword, State]);
+      return matchesSearch && matchesState;
+    });
+
+    setFilteredDevices(newFiltered);
+    setSelectedDevice(newFiltered[0]);
+  }, [filter]);
 
   return (
     <div className={styles.container}>
@@ -73,54 +80,66 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
 
         <Select
           defaultValue={0}
-          options={DEVICE_STATES}
+          options={stateOptions}
           onChange={handleStateChange}
           className="min-w-100px"
         ></Select>
       </div>
 
       <div className={styles.list}>
-        {filteredDevices.map((device) => (
-          <div
-            key={device.DeviceId}
-            className={`${styles.item} ${
-              selectedDevice?.DeviceId === device.DeviceId ? styles.activeItem : ""
-            }`}
-            onClick={() => onDeviceClick(device)}
-          >
-            <div className={styles.header}>
-              <span className={styles.name}>
-                {device.SitesName}{" "}
-                <span className={styles.deviceIdTitle}>
-                  [{device.DeviceId}]{" "}
+        {isLoading &&
+          [...new Array(5)].map((_, index) => (
+            <div
+              className={styles.item}
+              key={index}
+              style={{ marginBottom: "10px" }}
+            >
+              <Skeleton active></Skeleton>
+            </div>
+          ))}
+
+        {!isLoading &&
+          filteredDevices.length > 0 &&
+          filteredDevices.map((device) => (
+            <div
+              key={device.DeviceId}
+              className={`${styles.item} ${
+                selectedDevice?.DeviceId === device.DeviceId
+                  ? styles.activeItem
+                  : ""
+              }`}
+              onClick={() => onDeviceClick(device)}
+            >
+              <div className={styles.header}>
+                <span className={styles.name}>
+                  {device.SitesName}{" "}
+                  <span className={styles.deviceIdTitle}>
+                    [{device.DeviceId}]{" "}
+                  </span>
                 </span>
-              </span>
-              <span
-                className={`${styles.status} ${
-                  styles[getNameStatus(device.State).toLowerCase()]
-                }`}
-              >
-                {getNameStatus(device.State)}
-              </span>
+                <span
+                  className={`${styles.status} ${
+                    styles[getNameStatus(device.State).toLowerCase()]
+                  }`}
+                >
+                  {getNameStatus(device.State)}
+                </span>
+              </div>
+              <div className={styles.details}>
+                <p>Last: {device.LastCommunication}</p>
+              </div>
             </div>
-            <div className={styles.details}>
-              <p>Last: {device.LastCommunication}</p>
-            </div>
-          </div>
-        ))}
+          ))}
+
+        {!isLoading && filteredDevices.length == 0 && (
+          <Empty style={{ marginTop: 50 }} />
+        )}
       </div>
     </div>
   );
 };
 
 export default DeviceList;
-
-const DEVICE_STATES: SelectProps["options"] = [
-  { label: "Tất cả", value: 0 },
-  { label: "Online", value: 1 },
-  { label: "Offline", value: 2 },
-  { label: "Warning", value: 3 },
-];
 
 interface DeviceListProps {
   onDeviceClick: (device: TMapProps) => void;

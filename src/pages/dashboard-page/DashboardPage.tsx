@@ -1,11 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import type { SelectProps } from "antd";
 import type React from "react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import { useShallow } from "zustand/shallow";
-import generateFakeData from "../../utils/fakeDataUtils";
+import { generateFakeData } from "../../utils/AppUtils";
 import { DeviceList, MapView } from "./components";
 import styles from "./DashboardPage.module.css";
-import type { ExtendedMap, TMapProps } from "./data";
+import type { TMapProps } from "./data";
 import usePageState from "./useStatePage";
 
 const DashboardPage: React.FC = () => {
@@ -13,43 +14,36 @@ const DashboardPage: React.FC = () => {
     setDevices,
     setSelectedInfo,
     resetState,
-    devices,
     setFilteredDevices,
-    filteredDevices,
-    selectedDevice,
     setIsLoading,
+    setOptionState
   ] = usePageState(
     useShallow((s) => [
       s.setData,
       s.setSelectedInfo,
       s.resetState,
-      s.data,
       s.setDataFiltered,
-      s.dataFiltered,
-      s.selectedInfo,
       s.setIsLoading,
+      s.setStateOptions
     ])
   );
 
-  const mapRef = useRef<ExtendedMap | null>(null);
-
   useEffect(() => {
-    const init = async () => {
+    const initialPage =  () => {
       setIsLoading(true);
 
-      const data = await generateFakeData(20);
-      setDevices(data);
-      setFilteredDevices(devices);
-      setSelectedInfo(filteredDevices[0]);
+      setOptionState(DEVICE_STATES)
 
-      console.log("filteredDevices:", data);
-      console.log("selectedDevice:", devices);
+      const dataGenerate = generateFakeData(100);
+
+      setDevices(dataGenerate);
+      setFilteredDevices(dataGenerate);
+      setSelectedInfo(dataGenerate[0]);
 
       setIsLoading(false);
     };
 
-    init();
-    console.log(filteredDevices, selectedDevice);
+    initialPage();
 
     return () => {
       resetState();
@@ -57,16 +51,22 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   const handleDeviceClick = useCallback((device: TMapProps) => {
-    if (!mapRef.current) return;
     setSelectedInfo(device);
   }, []);
 
   return (
     <div className={styles.container}>
       <DeviceList onDeviceClick={handleDeviceClick} />
-      <MapView onMapReady={(map) => (mapRef.current = map)} />
+      <MapView />
     </div>
   );
 };
 
 export default DashboardPage;
+
+const DEVICE_STATES: SelectProps["options"] = [
+  { label: "Tất cả", value: 0 },
+  { label: "Online", value: 1 },
+  { label: "Offline", value: 2 },
+  { label: "Warning", value: 3 },
+];

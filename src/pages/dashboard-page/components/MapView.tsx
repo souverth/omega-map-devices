@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+
 import L from "leaflet";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -20,79 +21,75 @@ const defaultIcon = L.icon({
   popupAnchor: [1, -25],
   shadowSize: [35, 25],
 });
+
 L.Marker.prototype.options.icon = defaultIcon;
 
-const MapView = ({ onMapReady }: MapViewProps) => {
-  const [devices, selectedDevice, filteredDevices] = usePageState(
-    useShallow((s) => [s.dataFiltered, s.selectedInfo, s.dataFiltered])
+const MapView = () => {
+  const [devices, selectedDevice] = usePageState(
+    useShallow((s) => [s.data, s.selectedInfo, s.dataFiltered])
   );
 
   const mapRef = useRef<ExtendedMap | null>(null);
 
-  useEffect(() => {
-    if (mapRef.current || devices.length === 0) return; // Map đã được khởi tạo
-    console.log(filteredDevices[0], selectedDevice);
+  const handleMapping = () => {
+    if (devices.length === 0 || !selectedDevice) return;
 
-    const [x, y] =
-      selectedDevice == null ? filteredDevices[0].Point : selectedDevice.Point;
-    const map = L.map("map").setView([x, y], 17) as ExtendedMap;
-    mapRef.current = map;
+    const [x, y] = selectedDevice.Point;
+    const targetLatLng = L.latLng(x, y);
 
-    mapRef.current.flyTo([x, y], 17, { animate: true });
+    let map = mapRef.current;
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "IOTSOFTVN",
-    }).addTo(map);
+    // Nếu chưa có map: khởi tạo và thêm tile + markers
+    if (!map) {
+      map = L.map("map").setView(targetLatLng, 13);
+      mapRef.current = map;
 
-    // Tạo marker cluster group
-    const markerCluster = L.markerClusterGroup();
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "IOTSOFTVN",
+      }).addTo(map);
 
-    // Thêm marker vào cluster
-    devices.forEach((device) => {
-      const [x, y] = device.Point;
-      const marker = L.marker([x, y]).bindPopup(PopupViewer(device));
-      markerCluster.addLayer(marker);
-    });
+      // Tạo và lưu cluster
+      const clusterGroup = L.markerClusterGroup({ chunkedLoading: true });
 
-    map.addLayer(markerCluster);
+      devices.forEach((device) => {
+        const [dx, dy] = device.Point;
+        const marker = L.marker([dx, dy], { draggable: true }).bindPopup(
+          PopupViewer(device)
+        );
+        clusterGroup.addLayer(marker);
+      });
 
-    // Thêm phương thức getAllMarkers vào map instance
-    map.getAllMarkers = () => {
-      return markerCluster.getLayers() as L.Marker[];
-    };
+      map.addLayer(clusterGroup);
 
-    // Mở popup cho điểm đầu tiên
+      // Gắn vào mapRef nếu cần dùng lại
+      map.getAllMarkers = () => clusterGroup.getLayers() as L.Marker[];
+    }
 
-    markerCluster.once("animationend", () => {
-      // mở popup tại đây
-    });
+    // Từ đây map đã sẵn sàng
+    map.flyTo(targetLatLng, 13, { animate: true });
 
-    setTimeout(() => {
-      const target = selectedDevice ?? filteredDevices[0];
-      if (!target) return;
+    // Mở popup sau khi bay xong
+    map.once("moveend", () => {
+      const markers = map.getAllMarkers?.() || [];
 
-      const [tx, ty] = target.Point;
-      const markers = markerCluster.getLayers() as L.Marker[];
-
-      const targetMarker = markers.find(
-        (marker) =>
-          marker.getLatLng().lat === tx && marker.getLatLng().lng === ty
-      );
+      const targetMarker = markers.find((m: L.Marker) => {
+        const latlng = m.getLatLng();
+        return latlng.lat === x && latlng.lng === y;
+      });
 
       if (targetMarker) {
-        map.setView([tx, ty], 17, { animate: true });
         targetMarker.openPopup();
       }
-    }, 300); // Delay nhẹ để đảm bảo marker đã render xong
+    });
+  };
 
-    // Gọi callback onMapReady với map instance
-    onMapReady?.(map);
-
+  useEffect(() => {
+    handleMapping();
     return () => {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [onMapReady]);
+  }, [selectedDevice]);
 
   return (
     <div id="map" style={{ minHeight: "calc(100vh - 79px)", width: "100%" }} />
@@ -100,7 +97,3 @@ const MapView = ({ onMapReady }: MapViewProps) => {
 };
 
 export default MapView;
-
-interface MapViewProps {
-  onMapReady?: (map: ExtendedMap) => void;
-}

@@ -142,7 +142,7 @@ const AppLayout: React.FC = () => {
           <div style={{ overflowY: "auto", height: "calc(100vh - 65px)" }}>
             <Content
               style={{
-                // margin: "6px 8px 8px 8px",
+                margin: "6px 8px 8px 8px",
                 minHeight: "auto",
               }}
             >
