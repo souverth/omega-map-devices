@@ -22,7 +22,7 @@ function App() {
             <Route path="/" element={<Outlet />}>
               <Route index element={<AppLayout />} ></Route>
                 <Route element={<AppLayout />} >
-                  <Route  path="/dashboard" element={<DashboardPage />} />
+                  <Route  path="/map" element={<DashboardPage />} />
                 </Route>
             </Route>
           </Routes>

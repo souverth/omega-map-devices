@@ -16,7 +16,8 @@ const DashboardPage: React.FC = () => {
     resetState,
     setFilteredDevices,
     setIsLoading,
-    setOptionState
+    setOptionState,
+    devices
   ] = usePageState(
     useShallow((s) => [
       s.setData,
@@ -24,7 +25,8 @@ const DashboardPage: React.FC = () => {
       s.resetState,
       s.setDataFiltered,
       s.setIsLoading,
-      s.setStateOptions
+      s.setStateOptions,
+      s.data
     ])
   );
 
@@ -34,12 +36,11 @@ const DashboardPage: React.FC = () => {
 
       setOptionState(DEVICE_STATES)
 
-      const dataGenerate = await generateFakeData(5_000);
+      const dataGenerate = await generateFakeData(100);
 
       setDevices(dataGenerate);
       setFilteredDevices(dataGenerate);
       setSelectedInfo(dataGenerate[0]);
-
       setIsLoading(false);
     };
 
@@ -52,7 +53,9 @@ const DashboardPage: React.FC = () => {
 
   const handleDeviceClick = useCallback((device: TMapProps) => {
     setSelectedInfo(device);
+    console.table(devices);
   }, []);
+
 
   return (
     <div className={styles.container}>

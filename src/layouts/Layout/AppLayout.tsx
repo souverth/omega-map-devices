@@ -1,10 +1,21 @@
 import {
-  DashboardOutlined,
+  GithubOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  UserOutlined,
+  MoonOutlined,
+  RobotOutlined,
+  SettingOutlined,
+  UserOutlined
 } from "@ant-design/icons";
-import { Button, Layout, Menu, Space, theme, type MenuProps } from "antd";
+import {
+  Button,
+  Dropdown,
+  Layout,
+  Menu,
+  Space,
+  theme,
+  type MenuProps,
+} from "antd";
 import { Content, Header } from "antd/es/layout/layout";
 import Sider from "antd/es/layout/Sider";
 import type { MenuItemGroupType, MenuItemType } from "antd/es/menu/interface";
@@ -83,23 +94,24 @@ const AppLayout: React.FC = () => {
     <Fragment>
       <Layout>
         <Sider
+          theme="light"
           trigger={null}
           collapsible
           collapsed={collapsed}
-          style={{ height: "100vh" }}
+          style={{ height: "100vh", borderRight: "1px solid #f0f2f5" }}
         >
           <div
             style={{
               height: 32,
               margin: "16px",
-              background: "rgba(255, 255, 255, 0.2)",
+              backgroundColor: "#f0f2f5",
               borderRadius: 6,
             }}
           >
-            <div className={styles.textLogo}>{collapsed ? "A" : "Admin"}</div>
+            <div className={styles.textLogo}>{collapsed ? "E" : "Ethan"}</div>
           </div>
           <Menu
-            theme="dark"
+            theme="light"
             mode="inline"
             defaultOpenKeys={defaultOpenKeys}
             defaultSelectedKeys={defaultSelectedKeys}
@@ -135,7 +147,9 @@ const AppLayout: React.FC = () => {
               </div>
               <Space style={{ marginRight: 24 }}>
                 <UserOutlined />
-                <span>Ethan</span>
+                <Dropdown menu={{ items: settings }}>
+                  <span onClick={(e) => e.preventDefault()}>Ethan</span>
+                </Dropdown>
               </Space>
             </div>
           </Header>
@@ -155,13 +169,43 @@ const AppLayout: React.FC = () => {
   );
 };
 
+
 export default AppLayout;
 
 const items: MenuItem[] = [
   {
     key: "dashboard",
-    icon: <DashboardOutlined />,
-    label: <Link to="/dashboard">Dashboard</Link>,
+    icon: <RobotOutlined />,
+    label: <Link to="/map">Map</Link>,
     title: "Dashboard",
+  },
+];
+
+const settings: MenuProps["items"] = [
+  {
+    key: "1",
+    label: "Ethan",
+    disabled: true,
+  },
+  {
+    type: "divider",
+  },
+  {
+    key: "2",
+    label: "Profile",
+    icon: <GithubOutlined />,
+    extra: "⌘P",
+  },
+  {
+    key: "3",
+    label: "Dark theme",
+    icon: <MoonOutlined />,
+    extra: "⌘B",
+  },
+  {
+    key: "4",
+    label: "Settings",
+    icon: <SettingOutlined />,
+    extra: "⌘S",
   },
 ];
