@@ -1,5 +1,5 @@
-import DashboardPage from "./dashboard-page/DashboardPage";
+import MapPage from "./map-page/MapPage";
 
-export { DashboardPage };
+export { MapPage  };
 
 

@@ -9,7 +9,7 @@ import styles from "./DashboardPage.module.css";
 import type { TMapProps } from "./data";
 import usePageState from "./useStatePage";
 
-const DashboardPage: React.FC = () => {
+const MapPage: React.FC = () => {
   const [
     setDevices,
     setSelectedInfo,
@@ -65,7 +65,7 @@ const DashboardPage: React.FC = () => {
   );
 };
 
-export default DashboardPage;
+export default MapPage;
 
 const DEVICE_STATES: SelectProps["options"] = [
   { label: "All", value: 0 },

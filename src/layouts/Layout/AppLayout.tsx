@@ -174,10 +174,10 @@ export default AppLayout;
 
 const items: MenuItem[] = [
   {
-    key: "dashboard",
+    key: "map",
     icon: <RobotOutlined />,
     label: <Link to="/map">Map</Link>,
-    title: "Dashboard",
+    title: "Map",
   },
 ];
 

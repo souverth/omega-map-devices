@@ -2,7 +2,7 @@ import { App as AntdApp, ConfigProvider } from "antd";
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom';
 import "./App.css";
 import { AppLayout } from "./layouts";
-import { DashboardPage } from "./pages";
+import { MapPage } from "./pages";
 
 function App() {
   return (
@@ -22,7 +22,7 @@ function App() {
             <Route path="/" element={<Outlet />}>
               <Route index element={<AppLayout />} ></Route>
                 <Route element={<AppLayout />} >
-                  <Route  path="/map" element={<DashboardPage />} />
+                  <Route  path="/map" element={<MapPage />} />
                 </Route>
             </Route>
           </Routes>

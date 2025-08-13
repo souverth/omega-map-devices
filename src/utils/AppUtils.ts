@@ -1,4 +1,4 @@
-import type { TMapProps } from "../pages/dashboard-page/data";
+import type { TMapProps } from "../pages/map-page/data";
 
 export function generateFakeData(count = 100): TMapProps[] {
   const centers = [
