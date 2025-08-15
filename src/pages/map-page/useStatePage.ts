@@ -12,6 +12,7 @@ const initState: IState = {
   dataFiltered: [],
   stateOptions: [],
   selectedInfo: null,
+  shouldResetMap: false, // State để theo dõi việc reset map
 };
 
 const usePageState = create<IState & IAction>((set, get) => {
@@ -27,6 +28,7 @@ const usePageState = create<IState & IAction>((set, get) => {
        const newFilter = { ...get().filter }
       set({ filter: newFilter })
     },
+    triggerMapReset: () => { set((state) => ({ shouldResetMap: !state.shouldResetMap })) },
     resetState: () => set(initState),
   };
 });
@@ -42,12 +44,14 @@ interface IAction {
   setFilter: (filter: IFilter) => void;
   refresh: () => void;
   resetState: () => void;
+  triggerMapReset: () => void;
 }
 
 interface IState {
   isLoading: boolean
   data: TMapProps[]
   dataFiltered: TMapProps[]
+  shouldResetMap: boolean
   selectedInfo: TMapProps | null
   stateOptions: SelectProps["options"]
   filter: IFilter

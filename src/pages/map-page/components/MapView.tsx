@@ -10,133 +10,153 @@ import { useShallow } from "zustand/shallow";
 import iconUrl from "../../../assets/placeholder.png";
 import type { ExtendedMap } from "../data";
 import usePageState from "../useStatePage";
-import PopupViewer from "./PopupView";
+import PopupViewer from "./PopupView.tsx";
 
-// --- CẤU HÌNH MẶC ĐỊNH ---
-
-// Tạo một icon mặc định cho tất cả các marker trên bản đồ.
 const defaultIcon = L.icon({
-  iconUrl: iconUrl, // Đường dẫn đến ảnh icon.
-  shadowUrl: iconShadow, // Đường dẫn đến ảnh bóng của icon.
-  iconSize: [25, 25], // Kích thước của icon.
-  iconAnchor: [12, 25], // Vị trí "mỏ neo" của icon (điểm trên icon tương ứng với tọa độ).
-  popupAnchor: [1, -25], // Vị trí của popup so với icon.
-  shadowSize: [35, 25], // Kích thước của ảnh bóng.
+  iconUrl: iconUrl,
+  shadowUrl: iconShadow,
+  iconSize: [25, 25],
+  iconAnchor: [12, 25],
+  popupAnchor: [1, -25],
+  shadowSize: [35, 25],
 });
 
-// Ghi đè icon mặc định của Leaflet Marker bằng icon tùy chỉnh đã tạo.
 L.Marker.prototype.options.icon = defaultIcon;
 
-// --- COMPONENT MAPVIEW ---
+const DEFAULT_BOUNDS = L.latLngBounds(
+  [-35, -25], // Góc Tây Nam (Nam Phi)
+  [55, 150]   // Góc Đông Bắc (Nhật Bản)
+);
 
 const MapView = () => {
-  // Lấy danh sách thiết bị và thiết bị đang được chọn từ state chung của trang.
-  // `useShallow` giúp component chỉ re-render khi các giá trị trong mảng thực sự thay đổi.
-  const [devices, selectedDevice] = usePageState(
-    useShallow((s) => [s.data, s.selectedInfo, s.dataFiltered])
+  const [devices, selectedDevice, shouldResetMap] = usePageState(
+    useShallow((s) => [s.data, s.selectedInfo, s.shouldResetMap])
   );
 
-  // Sử dụng `useRef` để lưu trữ đối tượng bản đồ (map instance), giúp nó không bị khởi tạo lại sau mỗi lần re-render.
   const mapRef = useRef<ExtendedMap | null>(null);
+  const isDefaultView = useRef(true); // Theo dõi trạng thái view mặc định
 
-  // Hàm khởi tạo bản đồ.
   const initMap = () => {
-    // Lấy đối tượng map từ ref.
     let map = mapRef.current;
-    // Nếu bản đồ đã được khởi tạo rồi thì không làm gì cả.
     if (map) return;
+    if (devices.length === 0) return;
 
-    // Nếu không có danh sách thiết bị hoặc chưa có thiết bị nào được chọn thì không khởi tạo.
-    if (devices.length === 0 || selectedDevice == null) return;
-
-    // Lấy tọa độ (kinh độ, vĩ độ) của thiết bị đang được chọn.
-    const [x, y] = selectedDevice.Point;
-    // Tạo đối tượng LatLng của Leaflet từ tọa độ.
-    const targetLatLng = L.latLng(x, y);
-
-    // Khởi tạo bản đồ, gắn nó vào thẻ div có id="map", và đặt vị trí trung tâm ban đầu.
-    map = L.map("map").setView(targetLatLng, 13); // 13 là mức zoom.
-    // Lưu lại đối tượng map vào ref để sử dụng sau này.
+    map = L.map("map");
     mapRef.current = map;
 
-    // Thêm lớp nền cho bản đồ (tile layer) từ OpenStreetMap.
+    // Theo dõi sự thay đổi của view (zoom/pan)
+    map.on('zoomend moveend', () => {
+      const currentBounds = map.getBounds();
+      const currentZoom = map.getZoom();
+      
+      // Kiểm tra xem view hiện tại có phải là view mặc định không
+      isDefaultView.current = (
+        currentZoom === 4 &&
+        DEFAULT_BOUNDS.contains(currentBounds) &&
+        currentBounds.contains(DEFAULT_BOUNDS)
+      );
+    });
+
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "IOTSOFTVN", // Dòng chữ ghi công ở góc bản đồ.
+      attribution: "IOTSOFTVN",
+      //  noWrap: true, // Ngăn lặp tile theo chiều ngang
     }).addTo(map);
 
-    // Tạo một nhóm cluster để quản lý các marker. `chunkedLoading` giúp tải marker theo từng cụm.
     const clusterGroup = L.markerClusterGroup({ chunkedLoading: true });
 
-    // Duyệt qua danh sách các thiết bị để tạo marker cho từng cái.
     devices.forEach((device) => {
-      const [dx, dy] = device.Point; // Lấy tọa độ của thiết bị.
-      // Tạo marker tại tọa độ và gắn nội dung popup cho nó.
+      const [dx, dy] = device.Point;
       const marker = L.marker([dx, dy]).bindPopup(PopupViewer(device));
-      // Thêm marker vào nhóm cluster.
       clusterGroup.addLayer(marker);
     });
 
-    // Thêm nhóm cluster (chứa tất cả marker) vào bản đồ.
     map.addLayer(clusterGroup);
 
-    // Mở rộng đối tượng map, thêm một hàm tùy chỉnh để lấy tất cả các marker.
+    // Set initial view to default bounds
+    map.fitBounds(DEFAULT_BOUNDS, { 
+      padding: [20, 20],
+      duration: 1.5,
+      easeLinearity: 0.25,
+      animate: true 
+    });
+
     map.getAllMarkers = () => clusterGroup.getLayers() as L.Marker[];
   };
 
-  // Hàm cập nhật bản đồ khi có một thiết bị mới được chọn.
-  const updateSelectedMarker = () => {
-    // Nếu không có dữ liệu hoặc không có thiết bị được chọn thì thoát.
-    if (devices.length === 0 || !selectedDevice) return;
-
-    // Lấy tọa độ của thiết bị mới được chọn.
-    const [x, y] = selectedDevice.Point;
-    const targetLatLng = L.latLng(x, y);
-
-    // Lấy đối tượng map từ ref.
+  const resetMapView = () => {
     const map = mapRef.current;
+    if (!map) return;
 
-    // Di chuyển (bay) mượt mà đến tọa độ của thiết bị được chọn.
-    map.flyTo(targetLatLng, 13, { animate: true });
+    map.flyToBounds(DEFAULT_BOUNDS, {
+      animate: true,
+      duration: 1.5,
+      easeLinearity: 0.25,
+      padding: [20, 20]
+    });
+    
+    // Reset trạng thái view mặc định
+    isDefaultView.current = true;
+  };
 
-    // Sau khi "bay" xong, thực hiện hành động tiếp theo.
+  const updateSelectedMarker = () => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Nếu không có selectedDevice, thực hiện reset view
+    if (!selectedDevice) {
+      resetMapView();
+      return;
+    }
+
+    const [x, y] = selectedDevice.Point;
+    const targetLatLng = L.latLng(x, y); 
+
+    
+    map.flyTo(targetLatLng, 13, {
+      animate: true,
+      duration: 1.5,
+      easeLinearity: 0.25,
+    });
+
     map.once("moveend", () => {
-      // Lấy danh sách tất cả các marker trên bản đồ.
       const markers = map.getAllMarkers?.() || [];
 
-      // Tìm marker tương ứng với thiết bị đang được chọn bằng cách so sánh tọa độ.
       const targetMarker = markers.find((m: L.Marker) => {
         const latlng = m.getLatLng();
         return latlng.lat === x && latlng.lng === y;
       });
 
-      // Nếu tìm thấy marker, mở popup của nó lên.
       if (targetMarker) {
         targetMarker.openPopup();
       }
     });
   };
 
-  // Hook `useEffect` sẽ chạy mỗi khi `selectedDevice` thay đổi.
   useEffect(() => {
-    // Khởi tạo bản đồ (nếu chưa có).
     initMap();
-    // Cập nhật vị trí và mở popup cho marker được chọn.
-    updateSelectedMarker();
+  }, [devices]); 
 
-    // Hàm dọn dẹp (cleanup function) sẽ được gọi khi component bị unmount.
+ 
+  useEffect(() => {
+    if (!mapRef.current) return;
+    
+    const isResettingToDefault = !selectedDevice && !isDefaultView.current;
+    
+    if (selectedDevice || isResettingToDefault) {
+      updateSelectedMarker();
+    }
+  }, [selectedDevice, shouldResetMap]);
+
+  useEffect(() => {
     return () => {
-      // Xóa đối tượng bản đồ để giải phóng bộ nhớ.
       mapRef.current?.remove();
-      // Đặt ref về null.
       mapRef.current = null;
     };
-  }, [selectedDevice]); // Dependency array: chỉ chạy lại effect khi `selectedDevice` thay đổi.
+  }, []);
 
-  // Render một thẻ div để Leaflet sử dụng làm container cho bản đồ.
   return (
     <div id="map" style={{ minHeight: "calc(100vh - 79px)", width: "100%" }} />
   );
 };
 
-// Xuất component để có thể sử dụng ở nơi khác.
 export default MapView;

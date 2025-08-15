@@ -1,12 +1,24 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Empty, Input, Select, Skeleton } from "antd";
 import debounce from "lodash/debounce";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useShallow } from "zustand/shallow";
 import { formatNumber, getNameStatus } from "../../../utils/AppUtils";
 import type { TMapProps } from "../data";
 import usePageState from "../useStatePage";
-import styles from "./DeviceList.module.css";
+import styles from "./component.module.css";
+interface DeviceListProps {
+  onDeviceClick: (device: TMapProps) => void;
+}
+
+/** Chuẩn hóa text: lowercase + bỏ dấu, an toàn với null/undefined */
+function normalizeText(input?: string | null): string {
+  return (input ?? "")
+    .toString()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("vi");
+}
 
 const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
   const [
@@ -35,55 +47,102 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
 
   const { Keyword, State } = filter;
 
-  const handleSearch = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const keyword = e.target.value;
-      debouncedSearch(keyword);
-    },
-    [filter, setFilter]
-  );
+  // Keyword đã chuẩn hóa cho việc so khớp
+  const normalizedKeyword = useMemo(() => normalizeText(Keyword), [Keyword]);
+
+  const filterRef = useRef(filter); // trích lỏ 
+  useEffect(() => {
+    filterRef.current = filter;
+  }, [filter]);
 
   const debouncedSearch = useMemo(
     () =>
       debounce((keyword: string) => {
-        setFilter({ ...filter, Keyword: keyword });
-      }, 300), // delay 300ms
+        setFilter({ ...filterRef.current, Keyword: keyword });
+      }, 0),
     [setFilter]
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  const handleSearch = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Cancel lần trước để đảm bảo keyword cũ không bị chạy
+      debouncedSearch.cancel();
+      debouncedSearch(e.target.value);
+    },
+    [debouncedSearch]
   );
 
   const handleStateChange = useCallback(
     (value: number) => {
-      setFilter({ ...filter, State: value });
+      setFilter({ ...filterRef.current, State: value });
     },
-    [filter, setFilter]
+    [setFilter]
   );
 
+  // Lọc danh sách theo Keyword 
   useEffect(() => {
-    const newFiltered = devices.filter((device) => {
-      const matchesSearch =
-        device.SitesName.toLowerCase().includes(Keyword.toLowerCase()) ||
-        device.DeviceId.toLowerCase().includes(Keyword.toLowerCase()) ||
-        device.Template.toLowerCase().includes(Keyword.toLowerCase()) ||
-        device.Group.toLowerCase().includes(Keyword.toLowerCase());
+    const timeoutId = setTimeout(() => {
+      const next = (devices ?? []).filter((device) => {
+        // Kiểm tra State trước để tối ưu (fail-fast)
+        const matchesState = State === 0 ? true : device?.State === State;
+        if (!matchesState) return false;
 
-      const matchesState = State == 0 ? true : device.State === State;
+        // Nếu không có keyword thì không cần check search
+        if (!normalizedKeyword) return true;
 
-      return matchesSearch && matchesState;
-    });
+        const site = normalizeText(device?.SitesName);
+        const id = normalizeText(device?.DeviceId);
+        const tpl = normalizeText(device?.Template);
+        const grp = normalizeText(device?.Group);
 
-    setFilteredDevices(newFiltered);
+        return (
+          site.includes(normalizedKeyword) ||
+          id.includes(normalizedKeyword) ||
+          tpl.includes(normalizedKeyword) ||
+          grp.includes(normalizedKeyword)
+        );
+      });
 
-    if (
-      !selectedDevice ||
-      !newFiltered.find((d) => d.DeviceId === selectedDevice.DeviceId)
-    )
-      setSelectedDevice(newFiltered[0]);
-  }, [State, Keyword]);
+      setFilteredDevices(next);
+
+      // Giữ selected nếu vẫn còn trong danh sách; nếu không, chọn phần tử đầu (nếu có)
+      const stillSelected =
+        selectedDevice &&
+        next.some((d) => d.DeviceId === selectedDevice.DeviceId);
+
+      if (!stillSelected) {
+          setSelectedDevice(undefined as any);
+      }
+    }, 300); // 300ms debounce để tránh filtering quá nhiều lần
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    devices,
+    normalizedKeyword,
+    State,
+    setFilteredDevices,
+    selectedDevice,
+    setSelectedDevice,
+  ]);
+
+  const handleItemClick = useCallback(
+    (device: TMapProps) => {
+      setSelectedDevice(device);
+      onDeviceClick(device);
+    },
+    [onDeviceClick, setSelectedDevice]
+  );
 
   return (
     <div className={styles.container}>
       <h3 className={styles.title}>
-        Devices ({formatNumber(filteredDevices.length)})
+        Devices ({formatNumber(filteredDevices?.length ?? 0)})
       </h3>
 
       <div className={styles.filters}>
@@ -92,32 +151,33 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
           placeholder="Tìm kiếm thiết bị..."
           value={Keyword}
           onChange={handleSearch}
+          allowClear
           className={styles.searchInput}
         />
 
         <Select
-          defaultValue={State}
+          value={State} // controlled
           options={stateOptions}
           onChange={handleStateChange}
           className="min-w-100px"
-        ></Select>
+        />
       </div>
 
       <div className={styles.list}>
         {isLoading &&
-          [...new Array(5)].map((_, index) => (
+          Array.from({ length: 5 }).map((_, index) => (
             <div
               className={styles.item}
               key={index}
               style={{ marginBottom: "10px" }}
             >
-              <Skeleton active></Skeleton>
+              <Skeleton active />
             </div>
           ))}
 
         {!isLoading &&
-          filteredDevices.length > 0 &&
-          filteredDevices.map((device) => (
+          (filteredDevices?.length ?? 0) > 0 &&
+          filteredDevices!.map((device) => (
             <div
               key={device.DeviceId}
               className={`${styles.item} ${
@@ -125,7 +185,7 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
                   ? styles.activeItem
                   : ""
               }`}
-              onClick={() => onDeviceClick(device)}
+              onClick={() => handleItemClick(device)}
             >
               <div className={styles.header}>
                 <span className={styles.name}>
@@ -148,7 +208,7 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
             </div>
           ))}
 
-        {!isLoading && filteredDevices.length == 0 && (
+        {!isLoading && (filteredDevices?.length ?? 0) === 0 && (
           <Empty style={{ marginTop: 50 }} />
         )}
       </div>
@@ -157,7 +217,3 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
 };
 
 export default DeviceList;
-
-interface DeviceListProps {
-  onDeviceClick: (device: TMapProps) => void;
-}
