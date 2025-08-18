@@ -20,10 +20,10 @@ const PopupContent = ({ device }: PopupContentProps) => {
       <div style={{ fontFamily: 'sans-serif', minWidth: '220px' }}>
         <h4 style={{ margin: 0, fontSize: '16px' }}>{SitesName}</h4>
         <div style={{ margin: '4px 0' }}>
-          <strong>Device Id:</strong> {DeviceId}<br />
-          <strong>Template:</strong> {Template}<br />
-          <strong>Group:</strong> {Group}<br />
-          <strong>State:</strong> <span style={{ color: getStateColor(getNameStatus(State)) }}>{getNameStatus(State)}</span><br />
+          <strong>Device Id:</strong> {DeviceId}<br/>
+          <strong>Template:</strong> {Template}<br/>
+          <strong>Group:</strong> {Group}<br/>
+          <strong>State:</strong> <span style={{ color: getStateColor(getNameStatus(State)) }}>{getNameStatus(State)}</span><br/>
           <strong>Last:</strong> {LastCommunication}
         </div>
         <Button 

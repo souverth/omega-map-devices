@@ -11,7 +11,7 @@ interface DeviceListProps {
   onDeviceClick: (device: TMapProps) => void;
 }
 
-/** Chuẩn hóa text: lowercase + bỏ dấu, an toàn với null/undefined */
+/** Chuẩn hóa text: lowercase + bỏ dấu */
 function normalizeText(input?: string | null): string {
   return (input ?? "")
     .toString()
@@ -156,7 +156,7 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
         />
 
         <Select
-          value={State} // controlled
+          value={State} 
           options={stateOptions}
           onChange={handleStateChange}
           className="min-w-100px"
