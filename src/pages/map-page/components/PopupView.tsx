@@ -53,16 +53,18 @@ const DeviceDetailModal = ({ device, open, onClose }: { device: TMapProps; open:
       onCancel={onClose}
       footer={null}
       width="100vw"
-      destroyOnClose
+      destroyOnHidden
       wrapClassName="custom-modal-fullscreen"
       modalRender={(modal) => (
         <div className={styles.modalContainer}>
           {modal}
         </div>
       )}
-      bodyStyle={{
-        margin: 0,
-        padding: 0
+      styles={{
+        body: {
+          margin: 0,
+          padding: 0
+        }
       }}
       className={styles.modalBody}
     >
