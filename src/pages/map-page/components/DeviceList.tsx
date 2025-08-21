@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Empty, Input, Select, Skeleton } from "antd";
 import debounce from "lodash/debounce";
 import { useCallback, useEffect, useMemo, useRef } from "react";
@@ -7,18 +6,6 @@ import { formatNumber, getNameStatus } from "../../../utils/AppUtils";
 import type { TMapProps } from "../data";
 import usePageState from "../useStatePage";
 import styles from "./component.module.css";
-interface DeviceListProps {
-  onDeviceClick: (device: TMapProps) => void;
-}
-
-/** Chuẩn hóa text: lowercase + bỏ dấu */
-function normalizeText(input?: string | null): string {
-  return (input ?? "")
-    .toString()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLocaleLowerCase("vi");
-}
 
 const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
   const [
@@ -50,7 +37,7 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
   // Keyword đã chuẩn hóa cho việc so khớp
   const normalizedKeyword = useMemo(() => normalizeText(Keyword), [Keyword]);
 
-  const filterRef = useRef(filter); // trích lỏ 
+  const filterRef = useRef(filter); // trích lỏ
   useEffect(() => {
     filterRef.current = filter;
   }, [filter]);
@@ -85,7 +72,7 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
     [setFilter]
   );
 
-  // Lọc danh sách theo Keyword 
+  // Lọc danh sách theo Keyword
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       const next = (devices ?? []).filter((device) => {
@@ -117,7 +104,7 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
         next.some((d) => d.DeviceId === selectedDevice.DeviceId);
 
       if (!stillSelected) {
-          setSelectedDevice(undefined as any);
+        setSelectedDevice(undefined);
       }
     }, 300); // 300ms debounce để tránh filtering quá nhiều lần
 
@@ -156,7 +143,7 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
         />
 
         <Select
-          value={State} 
+          value={State}
           options={stateOptions}
           onChange={handleStateChange}
           className="min-w-100px"
@@ -217,3 +204,16 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
 };
 
 export default DeviceList;
+
+interface DeviceListProps {
+  onDeviceClick: (device: TMapProps) => void;
+}
+
+/** Chuẩn hóa text: lowercase + bỏ dấu */
+function normalizeText(input?: string | null): string {
+  return (input ?? "")
+    .toString()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("vi");
+}

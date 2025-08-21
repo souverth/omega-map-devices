@@ -39,7 +39,7 @@ interface IAction {
   setIsLoading: (isLoading: boolean) => void;
   setData: (data: TMapProps[]) => void;
   setDataFiltered: (dataFiltered: TMapProps[]) => void;
-  setSelectedInfo: (selectedInfo: TMapProps) => void
+  setSelectedInfo: (device: TMapProps | null | undefined) => void;
   setStateOptions: (stateOptions: SelectProps["options"]) => void;
   setFilter: (filter: IFilter) => void;
   refresh: () => void;

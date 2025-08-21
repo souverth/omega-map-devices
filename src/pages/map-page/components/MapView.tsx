@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import L from "leaflet";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -12,26 +11,31 @@ import type { ExtendedMap } from "../data";
 import usePageState from "../useStatePage";
 import PopupViewer from "./PopupView.tsx";
 
-const defaultIcon = L.icon({
-  iconUrl: iconUrl,
-  shadowUrl: iconShadow,
-  iconSize: [25, 25],
-  iconAnchor: [12, 25],
-  popupAnchor: [1, -25],
-  shadowSize: [35, 25],
-});
-
-L.Marker.prototype.options.icon = defaultIcon;
-
-const DEFAULT_BOUNDS = L.latLngBounds(
-  [-35, -25], // Góc Tây Nam (Nam Phi)
-  [55, 150]   // Góc Đông Bắc (Nhật Bản)
-);
-
 const MapView = () => {
   const [devices, selectedDevice, shouldResetMap] = usePageState(
     useShallow((s) => [s.data, s.selectedInfo, s.shouldResetMap])
   );
+
+  useEffect(() => {
+    return () => {
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    initMap();
+  }, [devices]); 
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    
+    const isResettingToDefault = !selectedDevice && !isDefaultView.current;
+    
+    if (selectedDevice || isResettingToDefault) {
+      updateSelectedMarker();
+    }
+  }, [selectedDevice, shouldResetMap]);
 
   const mapRef = useRef<ExtendedMap | null>(null);
   const isDefaultView = useRef(true); // Theo dõi trạng thái view mặc định
@@ -131,32 +135,26 @@ const MapView = () => {
       }
     });
   };
-
-  useEffect(() => {
-    initMap();
-  }, [devices]); 
-
  
-  useEffect(() => {
-    if (!mapRef.current) return;
-    
-    const isResettingToDefault = !selectedDevice && !isDefaultView.current;
-    
-    if (selectedDevice || isResettingToDefault) {
-      updateSelectedMarker();
-    }
-  }, [selectedDevice, shouldResetMap]);
-
-  useEffect(() => {
-    return () => {
-      mapRef.current?.remove();
-      mapRef.current = null;
-    };
-  }, []);
-
   return (
     <div id="map" style={{ minHeight: "calc(100vh - 79px)", width: "100%" }} />
   );
 };
 
 export default MapView;
+
+const defaultIcon = L.icon({
+  iconUrl: iconUrl,
+  shadowUrl: iconShadow,
+  iconSize: [25, 25],
+  iconAnchor: [12, 25],
+  popupAnchor: [1, -25],
+  shadowSize: [35, 25],
+});
+
+L.Marker.prototype.options.icon = defaultIcon;
+
+const DEFAULT_BOUNDS = L.latLngBounds(
+  [-35, -25], // Góc Tây Nam (Nam Phi)
+  [55, 150]   // Góc Đông Bắc (Nhật Bản)
+);
