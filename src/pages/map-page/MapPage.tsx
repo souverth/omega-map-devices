@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { FloatButton, type SelectProps } from "antd";
 import type React from "react";
 import { useCallback, useEffect } from "react";
@@ -58,7 +57,7 @@ const MapPage: React.FC = () => {
   }, []);
 
   const handleResetMap = useCallback(() => {
-    setSelectedInfo(undefined as unknown as TMapProps); // Clear selected device
+    setSelectedInfo(null); // Clear selected device
     triggerMapReset(); // Trigger map reset bất kể có selected device hay không
   }, [setSelectedInfo, triggerMapReset]);
 
