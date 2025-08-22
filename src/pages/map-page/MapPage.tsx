@@ -42,6 +42,7 @@ const MapPage: React.FC = () => {
       setDevices(dataGenerate);
       setFilteredDevices(dataGenerate);
       // setSelectedInfo(dataGenerate[0]);
+
       setIsLoading(false);
     };
 
@@ -65,9 +66,9 @@ const MapPage: React.FC = () => {
     <div className={styles.container}>
       <DeviceList onDeviceClick={handleDeviceClick} />
       <MapView />
-      <FloatButton 
-        icon={<ReloadOutlined />} 
-        style={{ insetInlineEnd: 20 }} 
+      <FloatButton
+        icon={<ReloadOutlined />}
+        style={{ insetInlineEnd: 20 }}
         onClick={handleResetMap}
         tooltip="Reset map view"
       />
