@@ -19,14 +19,14 @@ type Props = {
 };
 
 export const PowerDiagram = ({ devices, connections, onDeviceClick }: Props) => {
-  // Calculate SVG viewport dimensions based on device positions
+  // Tính toán kích thước khung nhìn SVG dựa trên vị trí các thiết bị
   const dimensions = useMemo(() => {
     const maxX = Math.max(...devices.map(d => d.x)) + 200;
     const maxY = Math.max(...devices.map(d => d.y)) + 100;
     return { width: maxX, height: maxY };
   }, [devices]);
 
-  // Calculate path for connections between devices
+  // Tính toán đường dẫn cho các kết nối giữa các thiết bị
   const getConnectionPath = useCallback((from: PowerDevice, to: PowerDevice) => {
     const fromWidth = from.type === 'cable' ? 160 : 280;
     const startX = from.x + fromWidth;
@@ -34,7 +34,7 @@ export const PowerDiagram = ({ devices, connections, onDeviceClick }: Props) => 
     const endX = to.x;
     const endY = to.y + 40;
 
-    // Calculate control points for smoother curves
+    // Tính toán điểm điều khiển cho đường cong mượt hơn
     const dx = endX - startX;
     // const dy = endY - startY;
     const controlX1 = startX + dx * 0.25;
@@ -44,13 +44,13 @@ export const PowerDiagram = ({ devices, connections, onDeviceClick }: Props) => 
             C ${controlX1} ${startY},
               ${controlX2} ${endY},
               ${endX} ${endY}`;
-  }, []);  // Handle device click
+  }, []);  // Xử lý sự kiện click vào thiết bị
   const handleDeviceClick = useCallback((deviceId: string) => {
     onDeviceClick?.(deviceId);
   }, [onDeviceClick]);
 
   const getDeviceStyle = useCallback((type: PowerDevice['type']) => {
-    // Directly use the device type or fall back to tower style
+    // Sử dụng trực tiếp kiểu thiết bị hoặc dùng kiểu tower làm mặc định
     const style = DEVICE_STYLES[type];
     return style || DEVICE_STYLES.tower;
   }, []);
@@ -62,7 +62,7 @@ export const PowerDiagram = ({ devices, connections, onDeviceClick }: Props) => 
         height={dimensions.height}
         className={styles.connections}
       >
-        {/* Render connections */}
+        {/* Hiển thị các kết nối */}
         {connections.map(conn => {
           const fromDevice = devices.find(d => d.id === conn.from);
           const toDevice = devices.find(d => d.id === conn.to);
@@ -93,7 +93,7 @@ export const PowerDiagram = ({ devices, connections, onDeviceClick }: Props) => 
           );
         })}
 
-        {/* Arrow marker definition */}
+        {/* Định nghĩa mũi tên */}
         <defs>
           <marker
             id="arrowhead"
@@ -108,7 +108,7 @@ export const PowerDiagram = ({ devices, connections, onDeviceClick }: Props) => 
         </defs>
       </svg>
 
-      {/* Render device cards */}
+      {/* Hiển thị các thẻ thiết bị */}
       {devices.map(device => {
         const style = getDeviceStyle(device.type);
 

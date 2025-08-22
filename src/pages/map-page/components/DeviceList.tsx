@@ -7,6 +7,11 @@ import type { TMapProps } from "../data";
 import usePageState from "../useStatePage";
 import styles from "./component.module.css";
 
+
+interface DeviceListProps {
+  onDeviceClick: (device: TMapProps) => void;
+}
+
 const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
   const [
     devices,
@@ -205,9 +210,6 @@ const DeviceList = ({ onDeviceClick }: DeviceListProps) => {
 
 export default DeviceList;
 
-interface DeviceListProps {
-  onDeviceClick: (device: TMapProps) => void;
-}
 
 /** Chuẩn hóa text: lowercase + bỏ dấu */
 function normalizeText(input?: string | null): string {
